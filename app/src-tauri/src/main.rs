@@ -435,8 +435,12 @@ fn main() {
             app.manage(engine.clone());
 
             // Start-at-login is on by default; a first run registers it.
-            if let Err(err) = apply_autostart(app.handle(), &engine.settings()) {
-                engine.log("WARN", &format!("Could not update start-at-login: {err}"));
+            // Skipped in dev builds, or the sign-in entry would end up
+            // pointing at target\debug.
+            if !cfg!(debug_assertions) {
+                if let Err(err) = apply_autostart(app.handle(), &engine.settings()) {
+                    engine.log("WARN", &format!("Could not update start-at-login: {err}"));
+                }
             }
 
             let tray = tray::build(app.handle(), &engine)?;

@@ -5,15 +5,14 @@ description = "Keeps a Monero blockchain synced on a schedule, then shuts monero
 edition = "2021"
 
 
+# Tuned for quick builds. For the smallest possible exe, add
+# `lto = true` and `codegen-units = 1` (several minutes slower).
 [profile.release]
 opt-level = "s"
-lto = true
-codegen-units = 1
 strip = true
 
 [dependencies]
 chrono = { version = "0.4.45", default-features = false, features = ["clock", "serde", "std"] }
-regex = "1.13.1"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 tauri = { version = "2.12.5", features = ["tray-icon", "image-png"] }

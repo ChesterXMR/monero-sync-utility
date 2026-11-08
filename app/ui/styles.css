@@ -56,9 +56,14 @@ html, body {
 
 #app {
   height: 100%;
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  /* Flex, not grid: a hidden banner leaves the grid and shifted the split
+     pane into an auto-height row, so dragging the divider resized the whole
+     pane instead of trading space between history and log. */
+  display: flex;
+  flex-direction: column;
 }
+
+#app > header, #app > .banner, #app > footer { flex: none; }
 
 .hidden { display: none !important; }
 
@@ -144,6 +149,7 @@ select:disabled { opacity: .55; }
 
 #split {
   --log-h: 240px;
+  flex: 1 1 auto;
   min-height: 0;
   display: grid;
   grid-template-rows: minmax(100px, 1fr) 9px minmax(80px, var(--log-h));
@@ -257,10 +263,10 @@ a { color: var(--focus); }
 #toasts { position: fixed; right: 16px; bottom: 44px; display: flex; flex-direction: column; gap: 8px; z-index: 10; }
 .toast {
   max-width: 420px; padding: 10px 14px; border-radius: 8px;
-  background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+  background: var(--surface); border: 1px solid var(--border);
   box-shadow: 0 8px 24px rgba(0, 0, 0, .18); animation: rise .18s ease-out;
 }
-.toast.err { border-left-color: var(--err); }
+.toast.err { background: var(--err-bg); color: var(--err); }
 @keyframes rise { from { transform: translateY(8px); opacity: 0; } }
 
 @media (max-width: 860px) {

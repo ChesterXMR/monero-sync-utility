@@ -2072,7 +2072,6 @@ name = "monero-sync"
 version = "1.0.0"
 dependencies = [
  "chrono",
- "regex",
  "serde",
  "serde_json",
  "tauri",
