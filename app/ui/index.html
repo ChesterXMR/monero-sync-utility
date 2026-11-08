@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monero Sync</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header class="top">
+      <div class="state">
+        <div class="state-line">
+          <span id="stateDot" class="dot"></span>
+          <h1 id="stateText">Loading…</h1>
+          <span id="syncBadge" class="badge hidden">Syncing</span>
+        </div>
+        <div id="nextText" class="sub"></div>
+        <div id="progressText" class="sub progress hidden"></div>
+      </div>
+
+      <div class="controls">
+        <label class="field">
+          <span>Run every</span>
+          <select id="freq"></select>
+        </label>
+        <label class="field">
+          <span>Give up after</span>
+          <select id="cap" title="A sync that hasn't finished by then shuts monerod down gracefully; progress is kept."></select>
+        </label>
+        <button id="btnPause" class="btn">Pause automatic syncing</button>
+      </div>
+
+      <div class="primary">
+        <button id="btnSync" class="btn btn-primary">Sync now</button>
+        <button id="btnSettings" class="btn btn-quiet" title="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.3 7.3 0 0 0-1.69-.98l-.38-2.65A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.17.58-1.69.98l-2.49-1a.5.5 0 0 0-.61.22l-2 3.46a.49.49 0 0 0 .12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66a.49.49 0 0 0-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.08.74 1.69.99l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65a7.4 7.4 0 0 0 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.66Z"/></svg>
+          Settings
+        </button>
+      </div>
+    </header>
+
+    <div id="banner" class="banner hidden">
+      <span id="bannerText"></span>
+      <button id="bannerBtn" class="btn btn-sm"></button>
+    </div>
+
+    <main id="split">
+      <section class="history">
+        <table>
+          <thead>
+            <tr>
+              <th>Started</th>
+              <th>Result</th>
+              <th class="num">Blocks</th>
+              <th class="num">Height</th>
+              <th class="num">Runtime</th>
+              <th class="center">Shutdown</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div id="empty" class="empty hidden">No runs yet. The first scheduled sync will appear here, or press <b>Sync now</b>.</div>
+      </section>
+
+      <div id="divider" class="divider" role="separator" aria-orientation="horizontal" title="Drag to resize"></div>
+
+      <section class="log">
+        <div class="log-head">
+          <span id="logLabel" class="log-label">Live output · idle</span>
+          <span class="spacer"></span>
+          <button id="btnClearHist" class="btn btn-sm">Clear history</button>
+          <button id="btnClearOut" class="btn btn-sm">Clear output</button>
+          <button id="btnStop" class="btn btn-sm" disabled>Stop sync</button>
+          <button id="btnTerminate" class="btn btn-sm btn-danger" disabled title="Force-kill monerod without flushing. Last resort only.">☠ Terminate</button>
+          <button id="btnOpenLog" class="btn btn-sm">Open log file</button>
+        </div>
+        <pre id="log" tabindex="0"></pre>
+      </section>
+    </main>
+
+    <footer id="footer" class="footer"></footer>
+  </div>
+
+  <dialog id="settingsDlg" class="dlg">
+    <form method="dialog" class="dlg-body">
+      <h2>Settings</h2>
+
+      <div class="group">
+        <label class="label" for="dataDir">Blockchain folder</label>
+        <p class="help">The folder that holds <code>lmdb\data.mdb</code>, passed to monerod as <code>--data-dir</code>. You can also pick the <code>lmdb</code> folder itself.</p>
+        <div class="row">
+          <input id="dataDir" type="text" spellcheck="false" placeholder="e.g. D:\Monero Blockchain">
+          <button type="button" id="btnPickData" class="btn">Browse…</button>
+        </div>
+        <p id="dataStatus" class="status"></p>
+      </div>
+
+      <div class="group">
+        <label class="label" for="monerodPath">monerod.exe</label>
+        <p class="help">Leave empty to find it automatically (Monero GUI Wallet install, next to this app, or on PATH).</p>
+        <div class="row">
+          <input id="monerodPath" type="text" spellcheck="false" placeholder="Auto-detect">
+          <button type="button" id="btnPickMonerod" class="btn">Browse…</button>
+        </div>
+        <p id="monerodStatus" class="status"></p>
+      </div>
+
+      <div class="group">
+        <span class="label">Behaviour</span>
+        <label class="check"><input type="checkbox" id="optLogin"> Start Monero Sync when I sign in to Windows</label>
+        <label class="check"><input type="checkbox" id="optBattery"> Skip scheduled syncs while on battery</label>
+      </div>
+
+      <div class="group">
+        <span class="label">Run manually in a terminal</span>
+        <p class="help">The bare daemon command. Unlike <b>Sync now</b> it has no checks, doesn't stop when synced and records no history; end it with Ctrl+C.</p>
+        <div class="row">
+          <code id="manualCmd" class="cmd"></code>
+          <button type="button" id="btnCopy" class="btn">Copy</button>
+        </div>
+      </div>
+
+      <div class="dlg-foot">
+        <span class="help">Settings and logs: <a href="#" id="lnkData"></a></span>
+        <button class="btn btn-primary" value="close">Done</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="checksDlg" class="dlg dlg-narrow">
+    <form method="dialog" class="dlg-body">
+      <h2>Preflight checks</h2>
+      <ul id="checkList" class="checks"></ul>
+      <p id="checkVerdict" class="verdict"></p>
+      <div class="dlg-foot">
+        <button type="button" id="btnRecheck" class="btn">Run again</button>
+        <button class="btn btn-primary" value="close">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toasts" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

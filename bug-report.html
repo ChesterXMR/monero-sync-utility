@@ -1,0 +1,799 @@
+<title>Orphaned Daemon Incident</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
+
+<style>
+  :root {
+    --ground:      #FBFAF8;
+    --surface:     #FFFFFF;
+    --surface-alt: #F4F2EF;
+    --ink:         #1A1614;
+    --ink-soft:    #4A423C;
+    --muted:       #8A817A;
+    --rule:        #E3DDD6;
+    --rule-strong: #CFC7BE;
+
+    --accent:      #F60;
+    --accent-dim:  #C55200;
+    --accent-wash: #FFF1E6;
+
+    --critical:    #C0392B;
+    --critical-wash:#FBEDEB;
+    --warning:     #9A6B0B;
+    --warning-wash:#FBF3E2;
+    --resolved:    #3F6B4E;
+    --resolved-wash:#EDF3EE;
+
+    --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #14110F;
+      --surface:     #1C1815;
+      --surface-alt: #241F1B;
+      --ink:         #F0EAE3;
+      --ink-soft:    #C4B9AF;
+      --muted:       #8F847A;
+      --rule:        #322B26;
+      --rule-strong: #453C34;
+
+      --accent:      #FF8534;
+      --accent-dim:  #FFA366;
+      --accent-wash: #2A1B0F;
+
+      --critical:    #E8705F;
+      --critical-wash:#2C1815;
+      --warning:     #D9A441;
+      --warning-wash:#2A2113;
+      --resolved:    #7FB08F;
+      --resolved-wash:#17251B;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #14110F;
+    --surface:     #1C1815;
+    --surface-alt: #241F1B;
+    --ink:         #F0EAE3;
+    --ink-soft:    #C4B9AF;
+    --muted:       #8F847A;
+    --rule:        #322B26;
+    --rule-strong: #453C34;
+
+    --accent:      #FF8534;
+    --accent-dim:  #FFA366;
+    --accent-wash: #2A1B0F;
+
+    --critical:    #E8705F;
+    --critical-wash:#2C1815;
+    --warning:     #D9A441;
+    --warning-wash:#2A2113;
+    --resolved:    #7FB08F;
+    --resolved-wash:#17251B;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-dim);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .eyebrow .sep { color: var(--rule-strong); }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.4rem, 6vw, 3.9rem);
+    line-height: 1.04;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-family: var(--serif);
+    font-size: clamp(1.1rem, 2.2vw, 1.32rem);
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 44ch;
+    margin: 0;
+  }
+
+  /* ---------- verdict strip ---------- */
+
+  .verdict {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+
+  .vcell {
+    background: var(--surface);
+    padding: 1.1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .vnum {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .vlabel {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .v-crit .vnum { color: var(--critical); }
+  .v-warn .vnum { color: var(--warning); }
+  .v-ok   .vnum { color: var(--resolved); }
+
+  /* ---------- sections ---------- */
+
+  section { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: 1.9rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin: 0;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule-strong);
+    text-wrap: balance;
+  }
+
+  p { margin: 0; max-width: 68ch; }
+  p + p { margin-top: 0.9rem; }
+
+  /* ---------- finding cards ---------- */
+
+  .finding {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--sev, var(--muted));
+    display: flex;
+    flex-direction: column;
+  }
+
+  .finding.crit { --sev: var(--critical); }
+  .finding.warn { --sev: var(--warning); }
+  .finding.ok   { --sev: var(--resolved); }
+
+  .fhead {
+    padding: 1.35rem 1.5rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .ftags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .pill {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.5rem;
+    border: 1px solid currentColor;
+  }
+
+  .pill.crit { color: var(--critical); background: var(--critical-wash); }
+  .pill.warn { color: var(--warning);  background: var(--warning-wash); }
+  .pill.ok   { color: var(--resolved); background: var(--resolved-wash); }
+  .pill.ghost { color: var(--muted); background: transparent; font-weight: 500; }
+
+  .fid {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  h3 {
+    font-family: var(--serif);
+    font-size: 1.42rem;
+    font-weight: 600;
+    line-height: 1.22;
+    margin: 0;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .fbody {
+    padding: 1.35rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  .flabel {
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.45rem;
+  }
+
+  /* ---------- evidence ---------- */
+
+  .evidence {
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+  }
+
+  .evidence pre {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.755rem;
+    line-height: 1.75;
+    color: var(--ink-soft);
+    white-space: pre;
+  }
+
+  .evidence .hl { color: var(--critical); font-weight: 700; }
+  .evidence .gd { color: var(--resolved); font-weight: 700; }
+  .evidence .dim { color: var(--muted); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    padding: 0.08em 0.35em;
+  }
+
+  /* ---------- timeline ---------- */
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+
+  .tevent {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    gap: 1.1rem;
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+  }
+
+  .tevent:last-child { border-bottom: none; }
+
+  .ttime {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: var(--accent-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tdesc { font-size: 0.93rem; color: var(--ink-soft); }
+  .tdesc strong { color: var(--ink); font-weight: 600; }
+  .tevent.bad { background: var(--critical-wash); }
+  .tevent.bad .ttime { color: var(--critical); }
+  .tevent.good { background: var(--resolved-wash); }
+  .tevent.good .ttime { color: var(--resolved); }
+
+  /* ---------- run table ---------- */
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+    background: var(--surface);
+    min-width: 40rem;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.7rem 0.9rem;
+    color: var(--muted);
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--rule);
+    font-variant-numeric: tabular-nums;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr.bad td { background: var(--critical-wash); }
+  tr.skip td { background: var(--warning-wash); }
+
+  .mark-ok   { color: var(--resolved); font-weight: 700; }
+  .mark-bad  { color: var(--critical); font-weight: 700; }
+  .mark-none { color: var(--muted); }
+
+  /* ---------- fix list ---------- */
+
+  .fixes { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+
+  .fix {
+    background: var(--surface);
+    padding: 1.1rem 1.3rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .fixstate {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+    margin-top: 0.12rem;
+  }
+
+  .fixstate.done    { color: var(--resolved); background: var(--resolved-wash); }
+  .fixstate.pending { color: var(--warning); background: var(--warning-wash); }
+
+  .fixtitle { font-weight: 600; font-size: 0.98rem; margin-bottom: 0.2rem; }
+  .fixnote { font-size: 0.88rem; color: var(--ink-soft); }
+
+  footer {
+    border-top: 1px solid var(--rule-strong);
+    padding-top: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.9;
+  }
+
+  @media (max-width: 34rem) {
+    .tevent { grid-template-columns: 1fr; gap: 0.2rem; }
+    .fix { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>Incident Report</span>
+      <span class="sep">/</span>
+      <span>Monero Sync Utility</span>
+      <span class="sep">/</span>
+      <span>28&ndash;30 Aug 2026</span>
+    </div>
+    <h1>The daemon that would not die</h1>
+    <p class="standfirst">
+      Thirteen scheduled runs over three days. Two crashed the supervisor and left
+      <code>monerod</code> running unsupervised &mdash; one of them for five and a half
+      hours, blocking three subsequent runs and ending in the exact abrupt termination
+      this utility was built to prevent.
+    </p>
+  </header>
+
+  <div class="verdict">
+    <div class="vcell v-ok">
+      <div class="vnum">8</div>
+      <div class="vlabel">Clean runs</div>
+    </div>
+    <div class="vcell v-crit">
+      <div class="vnum">2</div>
+      <div class="vlabel">Supervisor deaths</div>
+    </div>
+    <div class="vcell v-warn">
+      <div class="vnum">3</div>
+      <div class="vlabel">Blocked runs</div>
+    </div>
+    <div class="vcell v-crit">
+      <div class="vnum">5.5<span style="font-size:.9rem">h</span></div>
+      <div class="vlabel">Longest orphan</div>
+    </div>
+    <div class="vcell v-ok">
+      <div class="vnum">0</div>
+      <div class="vlabel">Corrupted DBs</div>
+    </div>
+  </div>
+
+  <section>
+    <h2>What the logs actually show</h2>
+    <p>
+      The sync logic itself is sound. Every run that completed did so correctly:
+      preflight checks caught what they were meant to catch, the peer guard held,
+      and eight runs shut down with all four daemon farewell markers present.
+      The database is intact at height <strong>3,751,103</strong>.
+    </p>
+    <p>
+      The failures are all in the <em>supervisor</em> &mdash; the PowerShell script
+      that babysits the daemon. Twice it died mid-run while <code>monerod</code> was
+      still running, and because nothing else was watching, the daemon simply kept
+      going with no one left to shut it down gracefully.
+    </p>
+  </section>
+
+  <section>
+    <h2>Finding 1 &mdash; the orphan</h2>
+
+    <div class="finding crit">
+      <div class="fhead">
+        <div class="ftags">
+          <span class="pill crit">Critical</span>
+          <span class="pill ghost">Data-loss risk</span>
+          <span class="fid">29 Aug 15:34 &rarr; 21:08</span>
+        </div>
+        <h3>Supervisor died mid-sync, orphaning the daemon for 5.5 hours</h3>
+      </div>
+      <div class="fbody">
+        <p>
+          The 15:34 run passed all checks, started <code>monerod</code> as PID 26584,
+          waited 577 seconds for RPC, and began polling. Then its log simply
+          <strong>stops mid-poll</strong> &mdash; no shutdown step, no summary, no error.
+          There is no entry in <code>sync-history.log</code> for this run at all,
+          which means the script never reached its own summary code.
+        </p>
+
+        <div>
+          <div class="flabel">Evidence &mdash; last four lines of sync-20260829-153430.log</div>
+          <div class="evidence"><pre>15:44:07  OK     RPC responding after 577s
+15:44:53  INFO     (daemon busy, RPC did not answer - normal...)
+15:45:38  INFO     (daemon busy, RPC did not answer - normal...)
+15:46:23  INFO     (daemon busy, RPC did not answer - normal...)
+<span class="hl">          &lt;log ends here. no shutdown. no summary. no history entry.&gt;</span></pre></div>
+        </div>
+
+        <p>
+          The daemon it started kept running and kept logging for another
+          <strong>5 hours 22 minutes</strong>, until its own log terminates
+          mid&#8209;sentence on a network write &mdash; the signature of an abrupt
+          termination, not a shutdown.
+        </p>
+
+        <div>
+          <div class="flabel">Evidence &mdash; the orphan's final log line, and its missing farewell</div>
+          <div class="evidence"><pre>21:08:14  E [170.64.223.145:18080 OUT] Failed to send message, dropping it
+<span class="hl">          &lt;truncated mid-operation&gt;</span>
+
+marker scan across the entire 908 KB daemon log:
+  Deinitializing core                        <span class="hl">0 hits</span>
+  Stopping cryptonote protocol               <span class="hl">0 hits</span>
+  Cryptonote protocol stopped successfully   <span class="hl">0 hits</span>
+  Stopping core RPC server                   <span class="hl">0 hits</span></pre></div>
+        </div>
+
+        <p>
+          Zero of four shutdown markers. This daemon was <em>never</em> gracefully
+          stopped. Compare a healthy run, where all four appear within milliseconds
+          of each other.
+        </p>
+
+        <div>
+          <div class="flabel">Contrast &mdash; the 30 Aug run, shut down properly</div>
+          <div class="evidence"><pre>09:56:39  INFO   POST http://127.0.0.1:18081/stop_daemon
+09:56:39  INFO     daemon replied: status=OK
+09:56:42  OK     monerod exited after 3.5s of flushing.
+09:56:42  OK     <span class="gd">Daemon logged its shutdown sequence (4/4 markers)</span>
+09:56:42  INFO       Deinitializing core
+09:56:42  INFO       Stopping cryptonote protocol
+09:56:42  INFO       Cryptonote protocol stopped successfully
+09:56:42  INFO       Stopping core RPC server</pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Finding 2 &mdash; the blockade</h2>
+
+    <div class="finding warn">
+      <div class="fhead">
+        <div class="ftags">
+          <span class="pill warn">High</span>
+          <span class="pill ghost">Availability</span>
+          <span class="fid">29 Aug 17:57, 18:10, 21:10</span>
+        </div>
+        <h3>The safety check became a denial of service</h3>
+      </div>
+      <div class="fbody">
+        <p>
+          With PID 26584 still holding port 18081, the next three scheduled runs
+          all hit check 3 and exited immediately &mdash; correctly, by design.
+          But the design has no escape hatch: nothing detects that the running
+          daemon is an <em>orphan from a dead run</em> rather than a live sync.
+        </p>
+
+        <div>
+          <div class="flabel">Evidence &mdash; sync-history.log</div>
+          <div class="evidence"><pre>2026-08-29 12:03:05  OK             5.1 min  height 3750444, +81 blocks
+<span class="dim">2026-08-29 15:34    (run died - no history entry written)</span>
+2026-08-29 17:57:57  <span class="hl">SKIP-RUNNING</span>   0.0 min  PID 26584, listening on 18081
+2026-08-29 18:10:00  <span class="hl">SKIP-RUNNING</span>   0.0 min  PID 26584, listening on 18081
+2026-08-29 21:10:01  <span class="hl">SKIP-RUNNING</span>   0.0 min  PID 26584, listening on 18081
+2026-08-30 09:56:46  OK            26.7 min  height 3751103, <span class="gd">+387 blocks</span></pre></div>
+        </div>
+
+        <p>
+          Three consecutive skips, all naming the same stale PID. The backlog
+          shows in the recovery: the next successful run had to pull down
+          <strong>387 blocks</strong> and took 26.7 minutes, against a normal
+          3&ndash;9 minutes.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Finding 3 &mdash; the first crash</h2>
+
+    <div class="finding crit">
+      <div class="fhead">
+        <div class="ftags">
+          <span class="pill crit">Critical</span>
+          <span class="pill ok">Fixed</span>
+          <span class="fid">28 Aug 15:02</span>
+        </div>
+        <h3>Blocking RPC client hung the supervisor indefinitely</h3>
+      </div>
+      <div class="fbody">
+        <p>
+          The earlier failure had a different and now-understood cause. The shutdown
+          step spawned <code>monerod.exe ... exit</code> as an RPC client, and that
+          call has <strong>no timeout</strong>. Against a busy daemon it was measured
+          blocking for 126 seconds; in this case it never returned at all, freezing
+          the script on that line while the daemon ran on for 24 more minutes.
+        </p>
+        <p>
+          That daemon did eventually shut down cleanly on its own. This one has been
+          fixed &mdash; the utility now sends <code>POST /stop_daemon</code> with a hard
+          60-second timeout, which returned in 15.2s where the client took 126s.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Full run history</h2>
+    <p>
+      Thirteen runs. The <em>markers</em> column is the one that matters &mdash; it
+      records whether the daemon logged its own shutdown sequence, which is the only
+      real proof it closed the database rather than being cut off.
+    </p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Run</th>
+            <th>Result</th>
+            <th>Runtime</th>
+            <th>Flush</th>
+            <th>Blocks</th>
+            <th>Markers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>28 Aug 13:29</td><td>OK</td><td>1.5 min</td><td>44.3s</td><td>+8</td><td class="mark-none">not yet checked</td></tr>
+          <tr class="bad"><td>28 Aug 14:58</td><td>DIED</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td class="mark-bad">no shutdown</td></tr>
+          <tr><td>28 Aug 16:28</td><td>OK</td><td>9.1 min</td><td>294.9s</td><td>+47</td><td class="mark-none">not yet checked</td></tr>
+          <tr><td>28 Aug 18:10</td><td>OK</td><td>3.5 min</td><td>115.3s</td><td>+48</td><td class="mark-ok">4/4</td></tr>
+          <tr><td>28 Aug 21:36</td><td>OK</td><td>8.5 min</td><td>218.2s</td><td>+104</td><td class="mark-ok">4/4</td></tr>
+          <tr><td>29 Aug 08:58</td><td>OK</td><td>20.0 min</td><td>33.4s</td><td>+326</td><td class="mark-ok">4/4</td></tr>
+          <tr><td>29 Aug 11:57</td><td>OK</td><td>5.1 min</td><td>123.4s</td><td>+81</td><td class="mark-ok">4/4</td></tr>
+          <tr class="bad"><td>29 Aug 15:34</td><td>DIED</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td class="mark-bad">0/4 &mdash; killed</td></tr>
+          <tr class="skip"><td>29 Aug 17:57</td><td>SKIP</td><td>0.0 min</td><td>&mdash;</td><td>&mdash;</td><td class="mark-none">blocked by orphan</td></tr>
+          <tr class="skip"><td>29 Aug 18:10</td><td>SKIP</td><td>0.0 min</td><td>&mdash;</td><td>&mdash;</td><td class="mark-none">blocked by orphan</td></tr>
+          <tr class="skip"><td>29 Aug 21:10</td><td>SKIP</td><td>0.0 min</td><td>&mdash;</td><td>&mdash;</td><td class="mark-none">blocked by orphan</td></tr>
+          <tr><td>30 Aug 09:30</td><td>OK</td><td>26.7 min</td><td>3.5s</td><td>+387</td><td class="mark-ok">4/4</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Incident timeline &mdash; 29 August</h2>
+    <div class="timeline">
+      <div class="tevent">
+        <div class="ttime">15:34:30</div>
+        <div class="tdesc">Run starts. All three preflight checks pass. <strong>monerod started as PID 26584</strong>.</div>
+      </div>
+      <div class="tevent">
+        <div class="ttime">15:44:07</div>
+        <div class="tdesc">RPC responds after 577s &mdash; a slow cold load, but healthy. Sync begins at height 3,750,444.</div>
+      </div>
+      <div class="tevent bad">
+        <div class="ttime">15:46:24</div>
+        <div class="tdesc"><strong>Supervisor dies.</strong> Log ends mid-poll. No shutdown, no summary, no history entry. The daemon is now unsupervised.</div>
+      </div>
+      <div class="tevent">
+        <div class="ttime">17:57:57</div>
+        <div class="tdesc">Scheduled run skips &mdash; check 3 finds PID 26584 holding port 18081.</div>
+      </div>
+      <div class="tevent">
+        <div class="ttime">18:10:00</div>
+        <div class="tdesc">Scheduled run skips. Same stale PID.</div>
+      </div>
+      <div class="tevent">
+        <div class="ttime">21:08:14</div>
+        <div class="tdesc"><strong>The orphan is terminated abruptly.</strong> Its log stops mid-write with zero shutdown markers &mdash; the exact failure mode this utility exists to prevent.</div>
+      </div>
+      <div class="tevent">
+        <div class="ttime">21:10:01</div>
+        <div class="tdesc">Third consecutive skip &mdash; the check still sees the PID two minutes after it died.</div>
+      </div>
+      <div class="tevent good">
+        <div class="ttime">30 Aug 09:56</div>
+        <div class="tdesc"><strong>Full recovery.</strong> Database reopened clean, 387 blocks pulled down, 4/4 shutdown markers. No corruption.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The database survived &mdash; this time</h2>
+    <p>
+      Worth stating plainly: <strong>there is no corruption</strong>. The 30 August run
+      opened the 279.6 GB LMDB without complaint, synced 387 blocks, and closed cleanly.
+      LMDB's copy-on-write design is genuinely resilient to a process being killed
+      between transactions.
+    </p>
+    <p>
+      But that is luck, not protection. A kill that lands during a write is a different
+      outcome, and the whole reason for the graceful-shutdown machinery is that you have
+      hit corruption before. An orphaned daemon running unsupervised for five hours is
+      exposure that the design is supposed to eliminate.
+    </p>
+  </section>
+
+  <section>
+    <h2>Fixes</h2>
+    <div class="fixes">
+
+      <div class="fix">
+        <div class="fixstate done">Shipped</div>
+        <div>
+          <div class="fixtitle">Non-blocking shutdown via <code>stop_daemon</code></div>
+          <div class="fixnote">
+            Replaced the timeout-less CLI client with an HTTP POST carrying a hard 60s
+            limit. Verified at 15.2s against a busy daemon where the client took 126s.
+            This addresses Finding&nbsp;3 directly.
+          </div>
+        </div>
+      </div>
+
+      <div class="fix">
+        <div class="fixstate done">Shipped</div>
+        <div>
+          <div class="fixtitle">Shutdown-marker verification</div>
+          <div class="fixnote">
+            Every run now confirms the four exact farewell markers after exit. This is
+            what made Finding&nbsp;1 provable at all &mdash; without it, an orphaned
+            daemon and a clean one look identical in the history.
+          </div>
+        </div>
+      </div>
+
+      <div class="fix">
+        <div class="fixstate pending">Recommended</div>
+        <div>
+          <div class="fixtitle">Adopt orphaned daemons instead of skipping</div>
+          <div class="fixnote">
+            The highest-value remaining fix. When check 3 finds a running
+            <code>monerod</code> with no live supervisor, the run should adopt and
+            gracefully stop it rather than skip. That single change turns Finding&nbsp;2
+            from a 5.5-hour blockade into a 3-minute self-repair.
+          </div>
+        </div>
+      </div>
+
+      <div class="fix">
+        <div class="fixstate pending">Recommended</div>
+        <div>
+          <div class="fixtitle">Shut the daemon down when the supervisor dies</div>
+          <div class="fixnote">
+            Register a <code>finally</code> / <code>ProcessExit</code> handler so an
+            unexpected script death still triggers a graceful stop. This is the root
+            cause of Finding&nbsp;1 &mdash; without it, any crash leaves a daemon running.
+          </div>
+        </div>
+      </div>
+
+      <div class="fix">
+        <div class="fixstate pending">Recommended</div>
+        <div>
+          <div class="fixtitle">Find out why the supervisor died</div>
+          <div class="fixnote">
+            Still unexplained. The task's 3-hour limit was not reached and the last result
+            was 0. Candidates: the machine going to battery (the task is set to stop on
+            battery, which terminates the process without running cleanup), a logoff, or
+            an unhandled error before the <code>catch</code> could log it. Worth enabling
+            Task Scheduler's operational history to catch the next one.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    Compiled from 22 log files in <code>logs\</code>, 28&ndash;30 August 2026.<br>
+    Sources: sync-history.log, 13 per-run supervisor logs, 8 daemon logs (~7.9 MB total).<br>
+    Database verified at height 3,751,103 &mdash; 279.6 GB &mdash; last written 30 Aug 09:56:42.
+  </footer>
+
+</div>

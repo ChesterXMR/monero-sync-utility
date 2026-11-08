@@ -1,0 +1,4 @@
+# Runtime output -- generated on each run, not part of the source.
+# Also keeps local paths and Monero peer connection history out of the repo.
+logs/
+.state/
