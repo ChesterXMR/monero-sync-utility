@@ -96,12 +96,16 @@ html, body {
   background: var(--accent); color: var(--accent-text);
 }
 
-.controls { display: grid; grid-template-columns: auto auto; gap: 8px 16px; align-items: center; }
+/* Both columns share the same two 40px rows, so the selects line up with
+   Sync now and the pause button lines up with Settings. */
+.controls, .primary { display: grid; grid-template-rows: 40px 40px; gap: 8px 16px; }
+.controls { grid-template-columns: auto auto; align-items: stretch; }
 .controls #btnPause { grid-column: 1 / -1; }
-.field { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
-.field span { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.controls select, .primary .btn { height: 100%; min-height: 0; }
+.field { display: flex; align-items: stretch; gap: 8px; justify-content: flex-end; }
+.field span { color: var(--muted); font-size: 13px; white-space: nowrap; align-self: center; }
 
-.primary { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.primary { align-items: stretch; }
 
 select, input[type="text"] {
   font: inherit; color: var(--text);
@@ -125,7 +129,7 @@ select:disabled { opacity: .55; }
 
 .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
-#btnSync { min-height: 44px; min-width: 140px; font-size: 15px; }
+#btnSync { min-width: 140px; font-size: 15px; }
 
 .btn-quiet { background: transparent; border-color: transparent; color: var(--muted); }
 .btn-quiet svg { width: 16px; height: 16px; fill: currentColor; }
@@ -273,5 +277,5 @@ a { color: var(--focus); }
   .top { grid-template-columns: 1fr; gap: 14px; }
   .controls { justify-content: start; }
   .field { justify-content: flex-start; }
-  .primary { flex-direction: row; }
+  .primary { grid-template-rows: 40px; grid-auto-flow: column; justify-content: start; }
 }

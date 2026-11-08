@@ -522,6 +522,14 @@ impl Engine {
 
 /// New text from sync.log for the live output pane.
 pub fn read_log_from(path: &Path, pos: Option<u64>) -> (u64, String, bool) {
+    // Check the size without opening the file for reading (an attributes-only
+    // query doesn't block writers). PowerShell 5.1's Add-Content fails if ANY
+    // reader has the file open, so only open it when there is something new.
+    if let (Some(p), Ok(m)) = (pos, fs::metadata(path)) {
+        if m.len() == p {
+            return (p, String::new(), false);
+        }
+    }
     let Ok(mut f) = File::open(path) else { return (0, String::new(), pos.unwrap_or(0) > 0) };
     let len = f.metadata().map(|m| m.len()).unwrap_or(0);
     let mut reset = false;

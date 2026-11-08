@@ -252,7 +252,28 @@ function Write-Log {
     }
     Write-Host $line -ForegroundColor $color
 
-    Add-Content -LiteralPath $runLog -Value $line -Encoding utf8
+    Add-LogLine -Path $runLog -Value $line
+}
+
+function Add-LogLine {
+    <#
+        Appends to a log file the app may be reading at that same moment.
+        PowerShell 5.1's Add-Content fails ("Stream was not readable") while
+        ANY other handle is open on the file, even a read-only one. With
+        $ErrorActionPreference = 'Stop' that once ended a run 0.3s after
+        preflight, because the error handler's own log write failed the same
+        way. So: retry briefly, and if it still fails, drop the line -- a
+        missing log line must never stop a sync.
+    #>
+    param([string] $Path, [string[]] $Value)
+    for ($i = 0; $i -lt 10; $i++) {
+        try {
+            Add-Content -LiteralPath $Path -Value $Value -Encoding utf8 -ErrorAction Stop
+            return
+        } catch {
+            Start-Sleep -Milliseconds 50
+        }
+    }
 }
 
 function Write-Summary {
@@ -269,7 +290,7 @@ function Write-Summary {
     $elapsed = (Get-Date) - $script:StartTime
     $line = '{0}  {1,-16}  {2,6:N1} min  {3}' -f `
             (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Status, $elapsed.TotalMinutes, $Detail
-    Add-Content -LiteralPath $summaryLog -Value $line -Encoding utf8
+    Add-LogLine -Path $summaryLog -Value $line
 
     # Structured record for the tray's history window.
     Add-HistoryEntry -Root $PSScriptRoot -Status $Status -Detail $Detail `
@@ -370,7 +391,7 @@ function Show-MonerodOutput {
         $mirror += "  | $show"
     }
     if ($mirror.Count -gt 0) {
-        try { Add-Content -LiteralPath $runLog -Value $mirror -Encoding utf8 } catch { }
+        Add-LogLine -Path $runLog -Value $mirror
     }
 }
 

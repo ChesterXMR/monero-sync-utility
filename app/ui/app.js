@@ -269,7 +269,20 @@ async function loadLog() {
 // Polling
 // ---------------------------------------------------------------------------
 
-async function refresh() {
+// One refresh at a time: overlapping ones (the 2s timer plus a button click)
+// read the log from the same position and showed new lines twice.
+let refreshing = null;
+let refreshAgain = false;
+function refresh() {
+  if (refreshing) { refreshAgain = true; return refreshing; }
+  refreshing = doRefresh().finally(() => {
+    refreshing = null;
+    if (refreshAgain) { refreshAgain = false; refresh(); }
+  });
+  return refreshing;
+}
+
+async function doRefresh() {
   if (document.hidden) return;
   try {
     status = await invoke('get_status');
